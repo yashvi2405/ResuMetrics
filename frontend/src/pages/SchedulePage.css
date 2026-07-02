@@ -1,0 +1,348 @@
+.schedule-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Header Section */
+.schedule-header-row {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.5px;
+    margin-bottom: 0.4rem;
+}
+
+.schedule-subtitle {
+    font-size: 0.95rem;
+    color: var(--gray);
+}
+
+/* Layout Grid */
+.schedule-main-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.schedule-card {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.schedule-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-details-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Large Calendar Styles */
+.calendar-large {
+    min-height: 480px;
+}
+
+.cal-large-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+}
+
+.cal-large-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.cal-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-cal-control {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--gray);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-cal-control:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.cal-large-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    text-align: center;
+}
+
+.cal-large-day-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gray);
+    padding-bottom: 10px;
+}
+
+.cal-large-day-cell {
+    font-size: 0.95rem;
+    font-weight: 500;
+    height: 48px;
+    border-radius: 10px;
+    color: #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cal-large-day-cell.clickable {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cal-large-day-cell.clickable:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.cal-large-day-cell.selected {
+    background: var(--primary);
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(95, 82, 255, 0.4);
+}
+
+.cal-large-day-cell.empty {
+    visibility: hidden;
+}
+
+.event-dot {
+    width: 5px;
+    height: 5px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 6px;
+}
+
+.cal-large-day-cell.selected .event-dot {
+    background-color: #ffffff;
+}
+
+/* Agenda Panel */
+.agenda-card {
+    min-height: 250px;
+}
+
+.no-events-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    color: var(--gray);
+    gap: 0.75rem;
+}
+
+.no-events-icon {
+    font-size: 2.25rem;
+    color: var(--border);
+}
+
+.agenda-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.agenda-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.agenda-item.completed {
+    opacity: 0.65;
+    background-color: var(--bg-card);
+}
+
+.agenda-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.agenda-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.agenda-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.agenda-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.agenda-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.agenda-badge.interview {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.agenda-badge.review {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.agenda-badge.application {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.agenda-time {
+    font-size: 0.75rem;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.time-icon {
+    font-size: 0.8rem;
+}
+
+.agenda-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--dark);
+    word-break: break-word;
+}
+
+.agenda-item.completed .agenda-text {
+    text-decoration: line-through;
+    color: var(--gray);
+}
+
+.btn-agenda-delete {
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.btn-agenda-delete:hover {
+    color: var(--danger);
+}
+
+/* Add Event Form */
+.add-event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-input {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+    background-color: var(--light);
+    color: var(--dark);
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+}
+
+.btn-submit-task {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 11px !important;
+    font-size: 0.85rem !important;
+    margin-top: 0.5rem;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .schedule-main-grid {
+        grid-template-columns: 1fr;
+    }
+}

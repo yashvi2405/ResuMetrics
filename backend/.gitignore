@@ -1,0 +1,32 @@
+# Dependency directories
+node_modules/
+backend/venv/
+backend/__pycache__/
+backend/app/database/resume_insight.db
+backend/uploads/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

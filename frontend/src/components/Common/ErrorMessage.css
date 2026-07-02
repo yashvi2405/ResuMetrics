@@ -1,0 +1,120 @@
+.error-message-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.error-message {
+    background: #fee;
+    border-left: 4px solid #f56565;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.error-icon {
+    color: #f56565;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.error-content {
+    flex: 1;
+}
+
+.error-text {
+    color: #c00;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.retry-btn {
+    background: #f56565;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    transition: background 0.3s;
+}
+
+.retry-btn:hover {
+    background: #e53e3e;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 1.2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+}
+
+.error-close:hover {
+    color: #c00;
+}
+
+.error-boundary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+}
+
+.error-boundary-icon {
+    font-size: 4rem;
+    color: #f56565;
+    margin-bottom: 1rem;
+}
+
+.error-boundary h2 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.error-boundary p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.reload-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.3s;
+}
+
+.reload-btn:hover {
+    transform: translateY(-2px);
+}

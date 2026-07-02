@@ -1,0 +1,37 @@
+# Python virtual environment
+backend/venv/
+backend/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# SQLite database
+backend/app/database/*.db
+
+# Uploaded files
+backend/uploads/
+
+# Environment / secret files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.sw?
