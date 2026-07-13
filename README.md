@@ -2,6 +2,7 @@
 
 A full-stack AI-powered resume analysis and placement preparation platform. Upload your resume, get an ATS compatibility score, practice with an AI career coach powered by Groq LLaMA 3.3, and track your placement readiness — all in one place.
 
+Vercel Link:http://resu-metrics.vercel.app/
 ---
 
 ## ✨ Features
