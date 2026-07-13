@@ -1,6 +1,6 @@
-# 📄 Resume Insight Tool
+# 📄 ResuMeterics
 
-A full-stack AI-powered resume analysis and career coaching platform. Upload your resume, get an ATS compatibility score, receive tailored improvement feedback, and practice mock technical interviews — all powered by Groq's LLaMA AI on the backend.
+A full-stack AI-powered resume analysis and placement preparation platform. Upload your resume, get an ATS compatibility score, practice with an AI career coach powered by Groq LLaMA 3.3, and track your placement readiness — all in one place.
 
 ---
 
@@ -9,13 +9,15 @@ A full-stack AI-powered resume analysis and career coaching platform. Upload you
 | Feature | Description |
 |---|---|
 | 📤 **Resume Upload** | Upload PDF or DOCX resumes for instant parsing and analysis |
-| 📊 **ATS Scoring** | Receive an overall ATS compatibility score with keyword, skill, and formatting breakdowns |
-| 🤖 **AI Resume Coach** | Chat with an AI career counselor for tailored resume improvement advice |
-| 🎤 **Mock Interviews** | Conduct AI-powered simulated technical interviews personalized to your resume skills |
-| 📈 **Dashboard Analytics** | Track your score history, top skills, and performance trends over time |
-| 🗓️ **Job Schedule** | Keep track of application deadlines and interview milestones |
-| 📚 **Prep Hub** | Study curated interview questions and resources |
-| 🎨 **Themes** | Choose from multiple UI themes (Cyber Stealth, Ivory Minimalist, VS Code Dark) |
+| 📊 **ATS Scoring** | ATS compatibility score with keyword, skill, and formatting breakdowns |
+| 📈 **Dashboard Analytics** | Track score history, top skills, and performance trends over time |
+| 🔍 **Skill Gap Analysis** | Identify missing skills compared to industry benchmarks |
+| 🤖 **AI Resume Coach** | Chat with a Groq LLaMA 3.3-powered assistant for tailored resume advice |
+| 🎤 **Mock Interview** | Simulate full technical interview rounds with AI feedback and scoring |
+| 🎯 **JD Matcher** | Paste any job description and get a keyword match score vs. your resume |
+| 📚 **Prep Arena** | CS/Aptitude quizzes, LeetCode study plans, and placement resources — all DB-synced |
+| 🗓️ **Job Schedule** | Track application deadlines and interview milestones |
+| 🎨 **Themes** | Multiple UI themes (Cyber Stealth, Ivory Minimalist, VS Code Dark) |
 
 ---
 
@@ -23,20 +25,21 @@ A full-stack AI-powered resume analysis and career coaching platform. Upload you
 
 ### Frontend
 - **React 18** + **Vite** — fast SPA development
-- **Vanilla CSS** — custom design system with CSS variables
+- **Vanilla CSS** — custom design system with CSS variables and theming
 - **React Router v6** — client-side routing
 - **Axios** — HTTP client for API communication
 - **React Hot Toast** — notification toasts
 - **React Icons** — icon library
 
 ### Backend
-- **FastAPI** — async Python web framework
-- **Motor** (`motor.motor_asyncio`) — async MongoDB driver
-- **MongoDB Atlas** — cloud database (also works with local MongoDB)
-- **Python-JOSE** — JWT authentication
-- **Passlib + bcrypt** — secure password hashing
-- **spaCy + NLTK** — NLP-based resume text extraction
-- **Groq API** (`llama-3.3-70b-versatile`) — AI chat completions proxy
+- **Node.js 18+** + **Express** — REST API server
+- **MongoDB** (native driver) — document database, no ORM
+- **JSON Web Tokens** (`jsonwebtoken`) — stateless authentication
+- **bcryptjs** — secure password hashing
+- **Multer** — multipart file upload handling
+- **pdf-parse** — PDF text extraction
+- **mammoth** — DOCX text extraction
+- **groq-sdk** — Groq AI API client for LLaMA 3.3-70b chat
 
 ---
 
@@ -45,32 +48,50 @@ A full-stack AI-powered resume analysis and career coaching platform. Upload you
 ```
 resume_analyzer/
 ├── backend/
-│   ├── app/
-│   │   ├── config.py           # Environment configuration
-│   │   ├── main.py             # FastAPI app entry point + CORS
-│   │   ├── database/
-│   │   │   └── db_manager.py   # MongoDB AsyncIOMotorClient setup
-│   │   ├── models/             # MongoModel schema wrappers
-│   │   ├── routes/             # API route handlers
-│   │   │   ├── auth.py         # Register, login, JWT
-│   │   │   ├── resume.py       # Upload & list resumes
-│   │   │   ├── analysis.py     # Run & retrieve resume analysis
-│   │   │   ├── dashboard.py    # Stats, trends, skill gaps
-│   │   │   └── chat.py         # Groq AI chat proxy
-│   │   ├── services/           # Resume parser, ATS scorer, ML scoring
-│   │   └── utils/              # File validation helpers
-│   ├── uploads/resumes/        # Stored resume files (gitignored)
-│   ├── .env.example            # Environment variable template
-│   ├── requirements.txt        # Python dependencies
-│   └── run.py                  # Uvicorn server launcher
+│   ├── src/
+│   │   ├── config.js               # Environment configuration
+│   │   ├── db.js                   # MongoDB connection + indexes + auto-increment
+│   │   ├── app.js                  # Express app (CORS, routes, health checks)
+│   │   ├── middleware/
+│   │   │   └── auth.js             # JWT Bearer token middleware
+│   │   ├── models/                 # Document schema factories
+│   │   │   ├── User.js
+│   │   │   ├── Resume.js
+│   │   │   ├── AnalysisResult.js
+│   │   │   ├── ExtractedData.js
+│   │   │   ├── Feedback.js
+│   │   │   ├── PrepProgress.js     # Study plan + solved count per user
+│   │   │   └── QuizScore.js        # Quiz results per user/subject/difficulty
+│   │   ├── routes/                 # Express route handlers
+│   │   │   ├── auth.js             # Register, login, JWT
+│   │   │   ├── resume.js           # Upload & list resumes
+│   │   │   ├── analysis.js         # Run & retrieve resume analysis
+│   │   │   ├── dashboard.js        # Stats, trends, skill gaps, delete
+│   │   │   ├── prep.js             # Study progress, quiz scores, JD matcher
+│   │   │   └── chat.js             # Groq AI proxy (counselor & interview modes)
+│   │   └── services/               # Business logic
+│   │       ├── resumeParser.js     # PDF/DOCX extraction + skill/keyword detection
+│   │       ├── atsService.js       # ATS compatibility scoring
+│   │       └── scoringService.js   # Weighted resume score + feedback
+│   ├── uploads/resumes/            # Stored resume files (gitignored)
+│   ├── server.js                   # Entry point — connects DB, starts server
+│   ├── package.json
+│   ├── .env.example                # Environment variable template
+│   └── .gitignore
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/              # Full page components
-│   │   ├── components/         # Reusable UI components
-│   │   ├── context/            # Auth context (React Context API)
-│   │   ├── services/api.js     # Axios API service layer
-│   │   └── main.jsx            # App entry point
+│   │   ├── pages/                  # Full page components
+│   │   │   ├── DashboardPage.jsx
+│   │   │   ├── ResumesPage.jsx
+│   │   │   ├── AnalysisPage.jsx
+│   │   │   ├── AssistantPage.jsx   # AI Coach (Groq-powered)
+│   │   │   └── PrepPage.jsx        # Prep Arena (DB-synced)
+│   │   ├── components/             # Reusable UI components
+│   │   ├── context/                # Auth context (React Context API)
+│   │   ├── data/mockQuestions.js   # CS & Aptitude quiz question bank
+│   │   ├── services/api.js         # Axios API service layer
+│   │   └── main.jsx                # App entry point
 │   ├── index.html
 │   └── vite.config.js
 │
@@ -83,18 +104,17 @@ resume_analyzer/
 ## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
-- **Python 3.10+**
 - **Node.js 18+**
-- **MongoDB** running locally on port `27017` (or a MongoDB Atlas connection string)
-- A **Groq API key** from [console.groq.com](https://console.groq.com/keys)
+- **MongoDB** running locally on port `27017` — or a [MongoDB Atlas](https://www.mongodb.com/atlas) connection string
+- **Groq API Key** *(optional)* — enables the AI assistant; get one free at [console.groq.com](https://console.groq.com)
 
 ---
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/resume-insight-tool.git
-cd resume-insight-tool
+git clone https://github.com/YOUR_USERNAME/ResuMeterics.git
+cd ResuMeterics
 ```
 
 ---
@@ -103,21 +123,7 @@ cd resume-insight-tool
 
 ```bash
 cd backend
-
-# Create and activate virtual environment
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Download spaCy language model
-python -m spacy download en_core_web_sm
+npm install
 ```
 
 Create your environment file from the template:
@@ -129,21 +135,26 @@ cp .env.example .env
 Fill in your values in `backend/.env`:
 
 ```env
-GROQ_API_KEY=gsk_your_actual_groq_key_here
 SECRET_KEY=your_random_secret_key_here
 MONGO_URL=mongodb://localhost:27017
 MONGO_DB_NAME=resume_insight
-CORS_ALLOWED_ORIGINS=http://localhost:3000
+PORT=8000
+
+# Optional: comma-separated frontend origins for production CORS
+CORS_ALLOWED_ORIGINS=
+
+# Optional: enables the Groq AI assistant (fallback to rule-based if blank)
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Start the backend server:
+Start the backend:
 
 ```bash
-python run.py
+npm run dev    # Development (auto-reload via nodemon)
+npm start      # Production
 ```
 
-> API is available at `http://localhost:8000`
-> Interactive API docs at `http://localhost:8000/docs`
+> API available at `http://localhost:8000`
 
 ---
 
@@ -151,46 +162,59 @@ python run.py
 
 ```bash
 cd ../frontend
-
-# Install dependencies
 npm install
-
-# Start the dev server
 npm run dev
 ```
 
-> Frontend is available at `http://localhost:3000`
+> Frontend available at `http://localhost:5173`
+
+If your backend runs on a different URL, create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
 
 ---
 
-## ☁️ Production Deployment
+## ☁️ Deploying to Render
+
+### Backend (Web Service)
+1. Connect your GitHub repo in the [Render dashboard](https://render.com)
+2. **Root directory:** `backend`
+3. **Build command:** `npm install`
+4. **Start command:** `npm start`
+5. Add these environment variables in Render's dashboard:
+
+| Variable | Value |
+|---|---|
+| `SECRET_KEY` | A long random string |
+| `MONGO_URL` | Your MongoDB Atlas connection string |
+| `MONGO_DB_NAME` | `resume_insight` |
+| `CORS_ALLOWED_ORIGINS` | Your Render frontend URL (e.g. `https://resumeterics.onrender.com`) |
+| `GROQ_API_KEY` | Your Groq API key |
+
+### Frontend (Static Site)
+1. Add a second Render service — **Static Site**
+2. **Root directory:** `frontend`
+3. **Build command:** `npm install && npm run build`
+4. **Publish directory:** `dist`
+5. Add environment variable: `VITE_API_URL=https://your-backend.onrender.com/api`
 
 ### MongoDB Atlas
 1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
-2. Whitelist your server IP in **Network Access**
+2. Whitelist `0.0.0.0/0` in **Network Access** (or Render's IP)
 3. Create a database user and copy your connection string
 4. Set `MONGO_URL=mongodb+srv://<user>:<password>@cluster.xxxx.mongodb.net/?retryWrites=true&w=majority`
-
-### Environment Variables (set in your hosting dashboard)
-
-| Variable | Description |
-|---|---|
-| `GROQ_API_KEY` | Your Groq API key |
-| `SECRET_KEY` | Long random string for signing JWT tokens |
-| `MONGO_URL` | MongoDB Atlas connection string |
-| `MONGO_DB_NAME` | Database name (e.g. `resume_insight`) |
-| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend URLs |
-
-> ⚠️ **Never commit your `.env` file.** Use `.env.example` as a reference template for teammates.
 
 ---
 
 ## 🔐 Security Notes
 
-- All passwords are hashed with **bcrypt** before storage
-- Authentication uses **JWT Bearer tokens** with configurable expiry
-- The Groq API key is stored **only on the server** — it is never sent to the frontend
-- Resume files are stored on the server's filesystem; only file metadata is stored in MongoDB
+- All passwords are hashed with **bcrypt** (salt rounds: 12) before storage
+- Authentication uses **JWT Bearer tokens** — never stored in cookies
+- The Groq API key is kept **server-side only** — never exposed to the browser
+- Resume files are stored on the server filesystem; only metadata goes in MongoDB
+- `.env` is gitignored — **never commit secrets**
 
 ---
 
@@ -201,17 +225,41 @@ npm run dev
 | `POST` | `/api/auth/register` | Register a new user |
 | `POST` | `/api/auth/login` | Login and receive JWT |
 | `GET` | `/api/auth/me` | Get current user info |
-| `POST` | `/api/resume/upload` | Upload a resume file |
+| `POST` | `/api/auth/logout` | Logout (stateless) |
+| `POST` | `/api/auth/refresh` | Refresh JWT token |
+| `POST` | `/api/auth/change-password` | Change user password |
+| `POST` | `/api/resume/upload` | Upload a resume file (PDF/DOCX) |
 | `GET` | `/api/resume/list` | List all user resumes |
-| `POST` | `/api/analysis/analyze/{id}` | Run ATS analysis on a resume |
-| `GET` | `/api/analysis/results/{id}` | Get analysis results |
+| `POST` | `/api/analysis/analyze/:id` | Run ATS analysis on a resume |
+| `GET` | `/api/analysis/results/:id` | Get analysis results |
 | `GET` | `/api/dashboard/stats` | Dashboard statistics |
 | `GET` | `/api/dashboard/recent-activities` | Recent user activity |
 | `GET` | `/api/dashboard/performance-metrics` | Score performance metrics |
 | `GET` | `/api/dashboard/skill-gaps` | Identify missing skills |
-| `DELETE` | `/api/dashboard/resume/{id}` | Delete a resume and its data |
-| `POST` | `/api/chat/groq` | AI chat completions proxy |
+| `DELETE` | `/api/dashboard/resume/:id` | Delete a resume and all its data |
+| `GET` | `/api/prep/progress` | Get active study plan + solved count |
+| `POST` | `/api/prep/progress` | Save active study plan + solved count |
+| `GET` | `/api/prep/quiz-scores` | Get all quiz scores for the user |
+| `POST` | `/api/prep/quiz-scores` | Save a quiz result |
+| `POST` | `/api/prep/jd-match/:id` | Match a job description against resume skills |
+| `GET` | `/api/chat/status` | Check if Groq AI is configured |
+| `POST` | `/api/chat` | Send a message to the Groq AI assistant |
+| `GET` | `/api/schedule` | Get all tasks (optional `?date=YYYY-MM-DD` filter) |
+| `POST` | `/api/schedule` | Create a new scheduled task |
+| `PATCH` | `/api/schedule/:id/toggle` | Toggle task completion status |
+| `DELETE` | `/api/schedule/:id` | Delete a task |
 | `GET` | `/health` | Backend health check |
+
+---
+
+## 🤖 AI Assistant
+
+The AI assistant uses **Groq's LLaMA 3.3-70b-versatile** model via a secure backend proxy:
+
+- **Counselor mode** — Personalised resume coaching using your actual resume data (score, skills, experience, ATS metrics) as context
+- **Mock Interview mode** — Multi-turn technical interview simulation with per-answer feedback and scoring
+
+If `GROQ_API_KEY` is not set, the assistant falls back to a built-in rule-based engine with no degradation to other features.
 
 ---
 

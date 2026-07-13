@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { FiUser, FiSettings, FiSliders, FiCheckSquare, FiAlertCircle, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 import './SettingsPage.css';
 
@@ -98,39 +99,37 @@ const SettingsPage = () => {
         window.dispatchEvent(new Event('storage-tasks-updated'));
     };
 
-    const handleChangePassword = (e) => {
+    const handleChangePassword = async (e) => {
         e.preventDefault();
-        
-        // Validations
+
         if (!currentPassword || !newPassword || !confirmPassword) {
             toast.error('Please fill in all password fields');
             return;
         }
-        if (newPassword.length < 6) {
-            toast.error('New password must be at least 6 characters long');
+        if (newPassword.length < 8) {
+            toast.error('New password must be at least 8 characters');
             return;
         }
-        
-        // Complexity Check: requires at least one letter and one number
-        const hasLetter = /[a-zA-Z]/.test(newPassword);
-        const hasNumber = /\d/.test(newPassword);
-        if (!hasLetter || !hasNumber) {
+        // Complexity check: at least one letter and one number
+        if (!/[a-zA-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
             toast.error('Password must contain both letters and numbers');
             return;
         }
-
         if (newPassword !== confirmPassword) {
             toast.error('New passwords do not match');
             return;
         }
 
-        // Mock success for client-side execution
-        toast.success('Password updated successfully!');
-        
-        // Reset fields
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        try {
+            await api.changePassword(currentPassword, newPassword);
+            toast.success('Password updated successfully!');
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err) {
+            const msg = err?.response?.data?.detail || 'Failed to change password';
+            toast.error(msg);
+        }
     };
 
     const handleSelectTheme = (themeName) => {

@@ -17,121 +17,50 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(null);
 
-    // Load user from localStorage on mount
+    // Restore session from localStorage on mount
     useEffect(() => {
-        const loadUser = () => {
-            try {
-                const storedToken = localStorage.getItem('token');
-                const storedUser = localStorage.getItem('user');
-                
-                console.log('Loading auth state from localStorage:', { 
-                    hasToken: !!storedToken, 
-                    hasUser: !!storedUser,
-                });
-                
-                if (storedToken && storedUser) {
-                    const userData = JSON.parse(storedUser);
-                    console.log('Restoring user session:', userData);
-                    setToken(storedToken);
-                    setUser(userData);
-                    api.setAuthToken(storedToken);
-                } else {
-                    console.log('No existing session found');
-                    setToken(null);
-                    setUser(null);
-                }
-            } catch (error) {
-                console.error('Error loading user from storage:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                setToken(null);
-                setUser(null);
-            } finally {
-                setLoading(false);
+        try {
+            const storedToken = localStorage.getItem('token');
+            const storedUser  = localStorage.getItem('user');
+            if (storedToken && storedUser) {
+                const userData = JSON.parse(storedUser);
+                setToken(storedToken);
+                setUser(userData);
+                api.setAuthToken(storedToken);
             }
-        };
-        
-        loadUser();
+        } catch {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const login = async (email, password) => {
         try {
-            console.log('=== LOGIN ATTEMPT ===');
-            console.log('Email:', email);
-            
             const response = await api.login(email, password);
-            console.log('Raw login response:', JSON.stringify(response, null, 2));
-            
-            // Extract token from response
-            let accessToken = null;
-            let userId = null;
-            let userName = null;
-            
-            // Try different possible response formats
-            if (response.access_token) {
-                accessToken = response.access_token;
-                console.log('Found access_token in response');
-            } else if (response.token) {
-                accessToken = response.token;
-                console.log('Found token in response');
-            }
-            
-            if (response.user_id) {
-                userId = response.user_id;
-            } else if (response.id) {
-                userId = response.id;
-            }
-            
-            if (response.name) {
-                userName = response.name;
-            } else if (response.username) {
-                userName = response.username;
-            }
-            
-            console.log('Extracted - Token:', !!accessToken, 'UserId:', userId, 'Name:', userName);
-            
+
+            const accessToken = response.access_token || response.token;
             if (!accessToken) {
-                console.error('NO TOKEN FOUND IN RESPONSE!');
                 toast.error('Server did not return a token');
                 return false;
             }
-            
-            // Save to localStorage
-            const userData = { 
-                id: userId, 
-                name: userName || email.split('@')[0], 
-                email: email 
+
+            const userData = {
+                id:    response.user_id || response.id,
+                name:  response.name || response.username || email.split('@')[0],
+                email,
             };
-            
-            console.log('Saving to localStorage...');
+
             localStorage.setItem('token', accessToken);
-            localStorage.setItem('user', JSON.stringify(userData));
-            
-            // Verify save worked
-            const savedToken = localStorage.getItem('token');
-            const savedUser = localStorage.getItem('user');
-            console.log('Verification - Token saved:', !!savedToken);
-            console.log('Verification - User saved:', !!savedUser);
-            
-            if (!savedToken) {
-                console.error('FAILED TO SAVE TO LOCALSTORAGE!');
-                toast.error('Failed to save login information');
-                return false;
-            }
-            
-            // Update state
+            localStorage.setItem('user',  JSON.stringify(userData));
             setToken(accessToken);
             setUser(userData);
             api.setAuthToken(accessToken);
-            
-            console.log('=== LOGIN SUCCESSFUL ===');
+
             toast.success(`Welcome back, ${userData.name}!`);
             return true;
-            
         } catch (error) {
-            console.error('=== LOGIN ERROR ===');
-            console.error('Error:', error);
-            console.error('Response:', error.response?.data);
             toast.error(error.response?.data?.detail || 'Login failed');
             return false;
         }
@@ -139,71 +68,35 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password) => {
         try {
-            console.log('=== REGISTRATION ATTEMPT ===');
-            console.log('Name:', name);
-            console.log('Email:', email);
-            
             const response = await api.register(name, email, password);
-            console.log('Raw register response:', JSON.stringify(response, null, 2));
-            
-            // Extract token from response
-            let accessToken = null;
-            let userId = null;
-            
-            if (response.access_token) {
-                accessToken = response.access_token;
-                console.log('Found access_token in response');
-            } else if (response.token) {
-                accessToken = response.token;
-                console.log('Found token in response');
-            }
-            
-            if (response.user_id) {
-                userId = response.user_id;
-            } else if (response.id) {
-                userId = response.id;
-            }
-            
-            console.log('Extracted - Token:', !!accessToken, 'UserId:', userId);
-            
+
+            const accessToken = response.access_token || response.token;
             if (!accessToken) {
-                console.error('NO TOKEN FOUND IN RESPONSE!');
                 toast.error('Server did not return a token');
                 return false;
             }
-            
-            // Save to localStorage
-            const userData = { 
-                id: userId, 
-                name: name, 
-                email: email 
+
+            const userData = {
+                id:    response.user_id || response.id,
+                name,
+                email,
             };
-            
-            console.log('Saving to localStorage...');
+
             localStorage.setItem('token', accessToken);
-            localStorage.setItem('user', JSON.stringify(userData));
-            
-            // Update state
+            localStorage.setItem('user',  JSON.stringify(userData));
             setToken(accessToken);
             setUser(userData);
             api.setAuthToken(accessToken);
-            
-            console.log('=== REGISTRATION SUCCESSFUL ===');
+
             toast.success('Registration successful!');
             return true;
-            
         } catch (error) {
-            console.error('=== REGISTRATION ERROR ===');
-            console.error('Error:', error);
-            console.error('Response:', error.response?.data);
             toast.error(error.response?.data?.detail || 'Registration failed');
             return false;
         }
     };
 
     const logout = () => {
-        console.log('=== LOGOUT ===');
-        console.log('Clearing localStorage and state');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         api.setAuthToken(null);
@@ -212,32 +105,21 @@ export const AuthProvider = ({ children }) => {
         toast.success('Logged out successfully');
     };
 
-    const isAuthenticated = !!token && !!user;
-
-    // Log current auth state
-    console.log('=== CURRENT AUTH STATE ===');
-    console.log('isAuthenticated:', isAuthenticated);
-    console.log('hasUser:', !!user);
-    console.log('hasToken:', !!token);
-    console.log('loading:', loading);
-    if (user) {
-        console.log('User:', { id: user.id, name: user.name, email: user.email });
-    }
-    if (token) {
-        console.log('Token exists');
-    }
-
+    // Updates display name / email in local state + localStorage only.
+    // The backend doesn't have a PATCH /auth/profile endpoint yet,
+    // so this is a client-side-only update.
     const updateProfile = (name, email) => {
         try {
             const updatedUser = { ...user, name, email };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setUser(updatedUser);
             return true;
-        } catch (error) {
-            console.error('Failed to update profile:', error);
+        } catch {
             return false;
         }
     };
+
+    const isAuthenticated = !!token && !!user;
 
     const value = {
         user,
@@ -247,7 +129,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateProfile,
         isAuthenticated,
-        loading
+        loading,
     };
 
     return (

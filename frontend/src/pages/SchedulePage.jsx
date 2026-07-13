@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/Layout/DashboardLayout';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { FiPlus, FiTrash2, FiClock, FiCalendar, FiCheckSquare } from 'react-icons/fi';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 import './SchedulePage.css';
 
@@ -13,11 +15,12 @@ const SchedulePage = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
-    
+    const [loadingTasks, setLoadingTasks] = useState(false);
+
     // Add task form state
-    const [taskText, setTaskText] = useState('');
-    const [taskTime, setTaskTime] = useState('10:00');
-    const [taskType, setTaskType] = useState('Interview'); // Interview, Review, Application
+    const [taskText, setTaskText]   = useState('');
+    const [taskTime, setTaskTime]   = useState('10:00');
+    const [taskType, setTaskType]   = useState('Interview');
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -27,129 +30,97 @@ const SchedulePage = () => {
         }
     }, [isAuthenticated, authLoading, navigate]);
 
-    // Load tasks from localStorage
+    // Load ALL tasks on mount (we store them all and filter by date client-side)
     useEffect(() => {
-        const storedTasks = localStorage.getItem('scheduled_tasks');
-        if (storedTasks) {
-            setTasks(JSON.parse(storedTasks));
-        } else {
-            // Seed initial sample tasks matching the reference image layout
-            const sampleTasks = [
-                {
-                    id: 1,
-                    text: 'Mock Interview Practice with Peers',
-                    time: '14:30',
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Interview',
-                    completed: false
-                },
-                {
-                    id: 2,
-                    text: 'Apply to Frontend Developer at TechCorp',
-                    time: '09:00',
-                    date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
-                    type: 'Application',
-                    completed: true
-                },
-                {
-                    id: 3,
-                    text: 'Incorporate AI suggestions into Resume V2',
-                    time: '16:00',
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Review',
-                    completed: false
-                }
-            ];
-            setTasks(sampleTasks);
-            localStorage.setItem('scheduled_tasks', JSON.stringify(sampleTasks));
-            triggerGlobalUpdate();
-        }
-    }, []);
+        if (isAuthenticated) loadTasks();
+    }, [isAuthenticated]);
 
-    const triggerGlobalUpdate = () => {
-        // Dispatch window storage event so the right panel re-calculates progress
-        window.dispatchEvent(new Event('storage-tasks-updated'));
+    const loadTasks = async () => {
+        setLoadingTasks(true);
+        try {
+            const data = await api.getScheduleTasks();
+            setTasks(data);
+        } catch (err) {
+            console.error('Failed to load tasks:', err);
+            toast.error('Failed to load schedule');
+        } finally {
+            setLoadingTasks(false);
+        }
     };
 
-    // Calendar generation
+    // ── Calendar helpers ──────────────────────────────────────────────────────
+
     const getDaysInMonth = (date) => {
-        const year = date.getFullYear();
+        const year  = date.getFullYear();
         const month = date.getMonth();
         const startDay = new Date(year, month, 1).getDay();
-        const numDays = new Date(year, month + 1, 0).getDate();
-        
+        const numDays  = new Date(year, month + 1, 0).getDate();
         const days = [];
-        for (let i = 0; i < startDay; i++) {
-            days.push(null);
-        }
-        for (let i = 1; i <= numDays; i++) {
-            days.push(i);
-        }
+        for (let i = 0; i < startDay; i++) days.push(null);
+        for (let i = 1; i <= numDays; i++) days.push(i);
         return days;
     };
 
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const monthNames = [
+    const daysOfWeek  = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames  = [
         'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        'July', 'August', 'September', 'October', 'November', 'December',
     ];
 
     const changeMonth = (direction) => {
-        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1);
-        setCurrentDate(newDate);
+        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + direction, 1));
     };
 
     const handleDayClick = (day) => {
         if (!day) return;
-        const newSelected = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-        setSelectedDate(newSelected);
+        setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
     };
 
-    const handleAddTask = (e) => {
+    // ── CRUD handlers ─────────────────────────────────────────────────────────
+
+    const handleAddTask = async (e) => {
         e.preventDefault();
         if (!taskText.trim()) return;
 
         const dateStr = selectedDate.toISOString().split('T')[0];
-        const newTask = {
-            id: Date.now(),
-            text: taskText,
-            time: taskTime,
-            date: dateStr,
-            type: taskType,
-            completed: false
-        };
-
-        const updatedTasks = [...tasks, newTask];
-        setTasks(updatedTasks);
-        localStorage.setItem('scheduled_tasks', JSON.stringify(updatedTasks));
-        triggerGlobalUpdate();
-        
-        setTaskText('');
-        toast.success('Task scheduled successfully');
+        try {
+            const newTask = await api.createScheduleTask(taskText, dateStr, taskTime, taskType);
+            setTasks(prev => [...prev, newTask]);
+            setTaskText('');
+            toast.success('Event scheduled!');
+        } catch (err) {
+            console.error('Failed to create task:', err);
+            toast.error(err?.response?.data?.detail || 'Failed to schedule event');
+        }
     };
 
-    const handleToggleComplete = (taskId) => {
-        const updated = tasks.map(task => 
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-        );
-        setTasks(updated);
-        localStorage.setItem('scheduled_tasks', JSON.stringify(updated));
-        triggerGlobalUpdate();
+    const handleToggleComplete = async (taskId) => {
+        try {
+            const { completed } = await api.toggleScheduleTask(taskId);
+            setTasks(prev => prev.map(t => t.task_id === taskId ? { ...t, completed } : t));
+        } catch (err) {
+            console.error('Failed to toggle task:', err);
+            toast.error('Failed to update task');
+        }
     };
 
-    const handleDeleteTask = (taskId) => {
-        const updated = tasks.filter(task => task.id !== taskId);
-        setTasks(updated);
-        localStorage.setItem('scheduled_tasks', JSON.stringify(updated));
-        triggerGlobalUpdate();
-        toast.success('Task removed');
+    const handleDeleteTask = async (taskId) => {
+        try {
+            await api.deleteScheduleTask(taskId);
+            setTasks(prev => prev.filter(t => t.task_id !== taskId));
+            toast.success('Event removed');
+        } catch (err) {
+            console.error('Failed to delete task:', err);
+            toast.error('Failed to delete event');
+        }
     };
+
+    // ── Derived state ─────────────────────────────────────────────────────────
 
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
-    const filteredTasks = tasks.filter(task => task.date === selectedDateStr);
-    
-    // Sort tasks chronologically by time
-    filteredTasks.sort((a, b) => a.time.localeCompare(b.time));
+    const filteredTasks   = tasks
+        .filter(t => t.date === selectedDateStr)
+        .sort((a, b) => a.time.localeCompare(b.time));
 
     const calendarDays = getDaysInMonth(currentDate);
 
@@ -159,20 +130,20 @@ const SchedulePage = () => {
     return (
         <DashboardLayout>
             <div className="schedule-content animate-slide-up">
-                {/* Header title */}
+                {/* Header */}
                 <div className="schedule-header-row">
-                    <h1 className="schedule-title">Interview & Job Schedule</h1>
+                    <h1 className="schedule-title">Interview &amp; Job Schedule</h1>
                     <p className="schedule-subtitle">Manage submission milestones and mock interview preparation targets.</p>
                 </div>
 
                 <div className="schedule-main-grid">
-                    {/* Interactive Calendar panel */}
+                    {/* ── Interactive Calendar ────────────────────────────── */}
                     <div className="schedule-card calendar-large hover-scale">
                         <div className="cal-large-header">
                             <h2>{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
                             <div className="cal-controls">
                                 <button onClick={() => changeMonth(-1)} className="btn-cal-control">&lt;</button>
-                                <button onClick={() => changeMonth(1)} className="btn-cal-control">&gt;</button>
+                                <button onClick={() => changeMonth(1)}  className="btn-cal-control">&gt;</button>
                             </div>
                         </div>
 
@@ -181,17 +152,17 @@ const SchedulePage = () => {
                                 <div key={idx} className="cal-large-day-label">{day}</div>
                             ))}
                             {calendarDays.map((day, idx) => {
-                                const isSelected = day && 
-                                    selectedDate.getDate() === day && 
-                                    selectedDate.getMonth() === currentDate.getMonth() && 
-                                    selectedDate.getFullYear() === currentDate.getFullYear();
-                                
-                                const dayStr = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0] : '';
+                                const isSelected = day &&
+                                    selectedDate.getDate()    === day &&
+                                    selectedDate.getMonth()   === currentDate.getMonth() &&
+                                    selectedDate.getFullYear()=== currentDate.getFullYear();
+
+                                const dayStr   = day ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0] : '';
                                 const hasEvents = dayStr && tasks.some(t => t.date === dayStr);
-                                
+
                                 return (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className={`cal-large-day-cell ${day ? 'clickable' : 'empty'} ${isSelected ? 'selected' : ''}`}
                                         onClick={() => handleDayClick(day)}
                                     >
@@ -203,13 +174,20 @@ const SchedulePage = () => {
                         </div>
                     </div>
 
-                    {/* Task Scheduler Form & View */}
+                    {/* ── Right panel ─────────────────────────────────────── */}
                     <div className="schedule-details-panel">
-                        {/* Selected Day Agenda */}
+
+                        {/* Agenda for selected day */}
                         <div className="schedule-card agenda-card hover-scale">
-                            <h3>Schedule for {selectedDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</h3>
-                            
-                            {filteredTasks.length === 0 ? (
+                            <h3>
+                                Schedule for {selectedDate.toLocaleDateString(undefined, {
+                                    month: 'long', day: 'numeric', year: 'numeric',
+                                })}
+                            </h3>
+
+                            {loadingTasks ? (
+                                <p style={{ opacity: 0.6, textAlign: 'center', padding: '1rem' }}>Loading…</p>
+                            ) : filteredTasks.length === 0 ? (
                                 <div className="no-events-view">
                                     <FiCalendar className="no-events-icon" />
                                     <p>No events scheduled for this date</p>
@@ -217,12 +195,12 @@ const SchedulePage = () => {
                             ) : (
                                 <div className="agenda-list">
                                     {filteredTasks.map((task) => (
-                                        <div key={task.id} className={`agenda-item ${task.completed ? 'completed' : ''}`}>
+                                        <div key={task.task_id} className={`agenda-item ${task.completed ? 'completed' : ''}`}>
                                             <div className="agenda-checkbox-wrapper">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={task.completed} 
-                                                    onChange={() => handleToggleComplete(task.id)}
+                                                <input
+                                                    type="checkbox"
+                                                    checked={task.completed}
+                                                    onChange={() => handleToggleComplete(task.task_id)}
                                                     className="agenda-checkbox"
                                                 />
                                             </div>
@@ -235,8 +213,8 @@ const SchedulePage = () => {
                                                 </div>
                                                 <p className="agenda-text">{task.text}</p>
                                             </div>
-                                            <button 
-                                                onClick={() => handleDeleteTask(task.id)} 
+                                            <button
+                                                onClick={() => handleDeleteTask(task.task_id)}
                                                 className="btn-agenda-delete"
                                             >
                                                 <FiTrash2 />
@@ -253,8 +231,8 @@ const SchedulePage = () => {
                             <form onSubmit={handleAddTask} className="add-event-form">
                                 <div className="form-group">
                                     <label>Event Description</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={taskText}
                                         onChange={(e) => setTaskText(e.target.value)}
                                         placeholder="e.g., Mock interview practice, Submit Google application"
@@ -262,12 +240,12 @@ const SchedulePage = () => {
                                         className="form-input"
                                     />
                                 </div>
-                                
+
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Time</label>
-                                        <input 
-                                            type="time" 
+                                        <input
+                                            type="time"
                                             value={taskTime}
                                             onChange={(e) => setTaskTime(e.target.value)}
                                             required
@@ -276,7 +254,7 @@ const SchedulePage = () => {
                                     </div>
                                     <div className="form-group">
                                         <label>Category</label>
-                                        <select 
+                                        <select
                                             value={taskType}
                                             onChange={(e) => setTaskType(e.target.value)}
                                             className="form-input"

@@ -35,8 +35,8 @@ const Register = ({ onSwitchToLogin, onSuccess }) => {
         
         if (!formData.password) {
             newErrors.password = 'Password is required';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
+        } else if (formData.password.length < 8) {
+            newErrors.password = 'Password must be at least 8 characters';
         }
         
         if (!formData.confirmPassword) {
@@ -51,8 +51,8 @@ const Register = ({ onSwitchToLogin, onSuccess }) => {
 
     const checkPasswordStrength = (password) => {
         let strength = 0;
-        if (password.length >= 6) strength++;
-        if (password.length >= 10) strength++;
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
         if (/[A-Z]/.test(password)) strength++;
         if (/[0-9]/.test(password)) strength++;
         if (/[^A-Za-z0-9]/.test(password)) strength++;

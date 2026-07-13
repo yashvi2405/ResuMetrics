@@ -50,10 +50,8 @@ class ApiService {
   // Test connection
   async testConnection() {
     try {
-      const response = await fetch('http://localhost:8000/health');
-      const data = await response.json();
-      console.log('Backend connection successful:', data);
-      return { connected: true, data };
+      const response = await this.api.get('/health'.replace('/api', '').replace(/\/api$/, '') || `${API_BASE_URL.replace('/api', '')}/health`);
+      return { connected: true, data: response.data };
     } catch (error) {
       console.error('Backend connection failed:', error.message);
       return { connected: false, error: error.message };
@@ -77,6 +75,29 @@ class ApiService {
       console.error('API.login error:', error.response?.status, error.response?.data);
       throw error;
     }
+  }
+
+  async logout() {
+    const response = await this.api.post('/auth/logout');
+    return response.data;
+  }
+
+  async refreshToken() {
+    const response = await this.api.post('/auth/refresh');
+    return response.data;
+  }
+
+  async getCurrentUser() {
+    const response = await this.api.get('/auth/me');
+    return response.data;
+  }
+
+  async changePassword(oldPassword, newPassword) {
+    const response = await this.api.post('/auth/change-password', {
+      old_password: oldPassword,
+      new_password: newPassword,
+    });
+    return response.data;
   }
 
   // Resume endpoints
@@ -131,25 +152,101 @@ class ApiService {
     return response.data;
   }
 
+  // ── Prep Arena endpoints ──────────────────────────────────────────────────
+
+  /** Fetch active study plan + solved count from the DB. */
+  async getPrepProgress() {
+    const response = await this.api.get('/prep/progress');
+    return response.data; // { plan_id, solved }
+  }
+
+  /** Persist active study plan + solved count to the DB. */
+  async savePrepProgress(plan_id, solved) {
+    const response = await this.api.post('/prep/progress', { plan_id, solved });
+    return response.data;
+  }
+
+  /** Fetch all quiz scores for the current user as { "os_easy": 18, ... }. */
+  async getQuizScores() {
+    const response = await this.api.get('/prep/quiz-scores');
+    return response.data;
+  }
+
+  /** Persist a single quiz result. */
+  async saveQuizScore(subject, difficulty, score, total) {
+    const response = await this.api.post('/prep/quiz-scores', { subject, difficulty, score, total });
+    return response.data;
+  }
+
   /**
-   * Proxy Groq chat completion through the FastAPI backend.
-   * The user's Groq API key is forwarded per-request and is NEVER stored server-side.
-   * All actual calls to api.groq.com happen exclusively on the backend.
-   *
-   * @param {string} apiKey       - User's Groq API key (read from localStorage)
-   * @param {string} systemPrompt - System prompt for the AI model
-   * @param {Array}  messages     - Conversation history [{role: 'user'|'assistant', content: string}]
-   * @param {number} temperature  - Sampling temperature (default 0.7)
-   * @returns {Promise<string>}   - AI reply text
+   * Run the JD matcher using real resume skills stored in the DB.
+   * @param {number} resumeId
+   * @param {string} jobDescription  - raw paste of the job posting
    */
-  async groqChat(systemPrompt, messages, temperature = 0.7) {
-    const response = await this.api.post('/chat/groq', {
+  async runJdMatch(resumeId, jobDescription) {
+    const response = await this.api.post(`/prep/jd-match/${resumeId}`, {
+      job_description: jobDescription,
+    });
+    return response.data; // { score, matched, missing, jd_keywords, resume_skills, suggestions }
+  }
+
+  // ── Groq AI Chat endpoints ────────────────────────────────────────────────
+
+  /**
+   * Check whether the backend has a Groq API key configured.
+   * Returns { available: boolean }
+   */
+  async groqStatus() {
+    const response = await this.api.get('/chat/status');
+    return response.data;
+  }
+
+  /**
+   * Send a message to the Groq-backed LLM through the backend proxy.
+   * @param {string} systemPrompt  - Role/persona instructions
+   * @param {Array}  messages      - [{ role: 'user'|'assistant', content: string }]
+   * @param {number} temperature   - 0–1 (default 0.8)
+   * @returns {string} The assistant's reply text
+   */
+  async groqChat(systemPrompt, messages, temperature = 0.8) {
+    const response = await this.api.post('/chat', {
       system_prompt: systemPrompt,
       messages,
       temperature,
     });
     return response.data.reply;
   }
+
+  // ── Schedule endpoints ────────────────────────────────────────────────────
+
+  /** Get all tasks for the user. Pass a date string "YYYY-MM-DD" to filter by day. */
+  async getScheduleTasks(date = null) {
+    const params = date ? { date } : {};
+    const response = await this.api.get('/schedule', { params });
+    return response.data;
+  }
+
+  /** Create a new scheduled task. */
+  async createScheduleTask(text, date, time, type) {
+    const response = await this.api.post('/schedule', { text, date, time, type });
+    return response.data;
+  }
+
+  /** Toggle the completed status of a task. */
+  async toggleScheduleTask(taskId) {
+    const response = await this.api.patch(`/schedule/${taskId}/toggle`);
+    return response.data;
+  }
+
+  /** Delete a task. */
+  async deleteScheduleTask(taskId) {
+    const response = await this.api.delete(`/schedule/${taskId}`);
+    return response.data;
+  }
+
 }
+
+
+
 
 export default new ApiService();

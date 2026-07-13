@@ -1047,3 +1047,29 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Quiz game header layout ─────────────────────────────────────────────── */
+.quiz-game-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.quiz-game-header > div:first-child {
+    flex-shrink: 0;
+}
+.quiz-progress-outer {
+    flex: 1;
+    min-width: 120px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.quiz-progress-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light, #a855f7));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}

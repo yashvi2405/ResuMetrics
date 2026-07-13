@@ -136,32 +136,14 @@ const PrepPage = () => {
         }
     }, [isAuthenticated, authLoading, navigate]);
 
-    // Load user storage stats and resumes on mount
+    // Load progress, quiz scores, and resumes from the API on mount
     useEffect(() => {
         if (isAuthenticated) {
-            const activePlan = localStorage.getItem('pref_coding_plan_id') || 'leetcode-150';
-            const count = localStorage.getItem(`pref_coding_solved_${activePlan}`) || '0';
-            
-            setActivePlanId(activePlan);
-            setSolvedCount(Number(count));
-
-            const history = {};
-            const subjects = ['os', 'dbms', 'cn', 'system_design', 'logical', 'language', 'maths', 'cs-final', 'aptitude-final'];
-            const diffs = ['easy', 'medium', 'hard'];
-            subjects.forEach(sub => {
-                diffs.forEach(diff => {
-                    const score = localStorage.getItem(`score_${sub}_${diff}`);
-                    if (score) history[`${sub}_${diff}`] = Number(score);
-                });
-                const finalScore = localStorage.getItem(`score_${sub}_final`);
-                if (finalScore) history[`${sub}_final`] = Number(finalScore);
-            });
-            setQuizHistory(history);
-            fetchResumes();
+            loadAllPrepData();
         }
     }, [isAuthenticated]);
 
-    // Fetch details of selected resume for dynamic advice
+    // Fetch analysis whenever selected resume changes
     useEffect(() => {
         if (selectedResumeId) {
             loadResumeAnalysis(selectedResumeId);
@@ -170,17 +152,27 @@ const PrepPage = () => {
         }
     }, [selectedResumeId]);
 
-    async function fetchResumes() {
-        setLoadingResumes(true);
+    async function loadAllPrepData() {
         try {
-            const resumeList = await api.getUserResumes();
+            // All three requests in parallel
+            const [progress, scores, resumeList] = await Promise.all([
+                api.getPrepProgress(),
+                api.getQuizScores(),
+                api.getUserResumes(),
+            ]);
+
+            setActivePlanId(progress.plan_id || 'leetcode-150');
+            setSolvedCount(progress.solved ?? 0);
+            setQuizHistory(scores || {});
+
             setResumes(resumeList);
             if (resumeList.length > 0) {
-                setSelectedResumeId(resumeList[0].id);
-                setSelectedResume(resumeList[0].id);
+                // resume_id from backend, not .id
+                setSelectedResumeId(resumeList[0].resume_id);
+                setSelectedResume(resumeList[0].resume_id);
             }
         } catch (err) {
-            console.error('Failed to load resumes for prep advice', err);
+            console.error('Failed to load prep data:', err);
         } finally {
             setLoadingResumes(false);
         }
@@ -198,23 +190,27 @@ const PrepPage = () => {
     // ----------------------------------------------------
     // ACTIVE PLAN SELECTION & SOLVE COUNTER MUTATIONS
     // ----------------------------------------------------
-    const selectActivePlan = (planId) => {
+    const selectActivePlan = async (planId) => {
         setActivePlanId(planId);
-        localStorage.setItem('pref_coding_plan_id', planId);
-        const count = localStorage.getItem(`pref_coding_solved_${planId}`) || '0';
-        setSolvedCount(Number(count));
-        toast.success(`Active plan updated! Tracking details saved.`);
-        window.dispatchEvent(new Event('storage-tasks-updated'));
+        setSolvedCount(0);
+        try {
+            await api.savePrepProgress(planId, 0);
+            toast.success('Active plan updated!');
+        } catch (err) {
+            console.error('Failed to save plan:', err);
+        }
     };
 
-    const updateSolvedCount = (val, maxLimit) => {
+    const updateSolvedCount = async (val, maxLimit) => {
         let cleanVal = Number(val);
         if (isNaN(cleanVal) || cleanVal < 0) cleanVal = 0;
         if (cleanVal > maxLimit) cleanVal = maxLimit;
-
         setSolvedCount(cleanVal);
-        localStorage.setItem(`pref_coding_solved_${activePlanId}`, cleanVal.toString());
-        window.dispatchEvent(new Event('storage-tasks-updated'));
+        try {
+            await api.savePrepProgress(activePlanId, cleanVal);
+        } catch (err) {
+            console.error('Failed to save solved count:', err);
+        }
     };
 
     // ----------------------------------------------------
@@ -265,37 +261,31 @@ const PrepPage = () => {
         }
     };
 
-    const submitQuiz = () => {
+    const submitQuiz = async () => {
         const { questions, answers, subject, difficulty } = activeQuiz;
         let score = 0;
         questions.forEach(q => {
-            if (answers[q.id] === q.correctOption) {
-                score++;
-            }
+            if (answers[q.id] === q.correctOption) score++;
         });
 
         const historyKey = `${subject}_${difficulty}`;
-        localStorage.setItem(`score_${subject}_${difficulty}`, score.toString());
-        setQuizHistory(prev => ({
-            ...prev,
-            [historyKey]: score
-        }));
-
-        setQuizResult({
-            score,
-            total: questions.length,
-            questions,
-            answers
-        });
+        setQuizHistory(prev => ({ ...prev, [historyKey]: score }));
+        setQuizResult({ score, total: questions.length, questions, answers });
         setActiveQuiz(null);
         toast.success(`Quiz completed! You scored ${score}/${questions.length}`);
-        window.dispatchEvent(new Event('storage-tasks-updated'));
+
+        // Persist to DB (non-blocking)
+        try {
+            await api.saveQuizScore(subject, difficulty, score, questions.length);
+        } catch (err) {
+            console.error('Failed to save quiz score:', err);
+        }
     };
 
     // ----------------------------------------------------
-    // JOB DESCRIPTION MATCHER LOGIC
+    // JOB DESCRIPTION MATCHER LOGIC  (backend-powered)
     // ----------------------------------------------------
-    const runJdMatcher = () => {
+    const runJdMatcher = async () => {
         if (!selectedResume) {
             toast.error('Please upload and select a resume first');
             return;
@@ -306,52 +296,24 @@ const PrepPage = () => {
         }
 
         setMatchingJd(true);
-        setTimeout(() => {
-            const targetResume = resumes.find(r => r.id === selectedResume);
-            const skillsInResume = targetResume?.skills || [];
-            
-            const jdClean = jobDescription.toLowerCase();
-            const techKeywordsPool = [
-                'python', 'javascript', 'java', 'sql', 'react', 'node', 'django', 'mongodb', 
-                'postgresql', 'docker', 'kubernetes', 'aws', 'git', 'c++', 'html', 'css', 
-                'c#', 'rust', 'typescript', 'machine learning', 'data science', 'dsa', 
-                'system design', 'operating systems', 'dbms', 'computer networks', 'redis'
-            ];
-
-            const jdFoundSkills = techKeywordsPool.filter(kw => jdClean.includes(kw));
-            
-            const matches = skillsInResume.filter(sk => jdFoundSkills.includes(sk.toLowerCase()));
-            const missing = jdFoundSkills.filter(sk => !skillsInResume.map(s => s.toLowerCase()).includes(sk));
-
-            let calculatedScore = 50;
-            if (jdFoundSkills.length > 0) {
-                calculatedScore = Math.round((matches.length / jdFoundSkills.length) * 50) + 40;
-            }
-            if (calculatedScore > 98) calculatedScore = 98;
-
-            const suggestionsList = [];
-            if (missing.includes('dsa') || missing.includes('python') || missing.includes('c++')) {
-                suggestionsList.push('Add project implementations of Core Algorithms (DSA) or mention specific code execution patterns.');
-            }
-            if (missing.includes('system design') || missing.includes('kubernetes') || missing.includes('docker')) {
-                suggestionsList.push('Include cloud hosting deployments or containerization tags to demonstrate architecture capabilities.');
-            }
-            if (missing.includes('sql') || missing.includes('dbms') || missing.includes('postgresql')) {
-                suggestionsList.push('Highlight database schema structures, relational normalization experience, and optimized query indices.');
-            }
-            if (suggestionsList.length === 0) {
-                suggestionsList.push('Excellent keyword alignment! Add quantitative impact numbers (e.g. Optimized queries by 30%) to maximize interview chances.');
-            }
-
+        try {
+            const result = await api.runJdMatch(selectedResume, jobDescription);
             setJdResults({
-                score: calculatedScore,
-                matches: matches.length > 0 ? matches : ['No matches identified'],
-                missing: missing.length > 0 ? missing : ['Fully aligned!'],
-                suggestions: suggestionsList
+                score:       result.score,
+                matches:     result.matched,
+                missing:     result.missing,
+                suggestions: result.suggestions,
+                jd_keywords: result.jd_keywords,
+                resume_skills: result.resume_skills,
             });
-            setMatchingJd(false);
             toast.success('Job Description matching analysis complete!');
-        }, 1800);
+        } catch (err) {
+            const msg = err?.response?.data?.detail || err.message;
+            toast.error(`JD Match failed: ${msg}`);
+            console.error('JD match error:', err);
+        } finally {
+            setMatchingJd(false);
+        }
     };
 
     // ----------------------------------------------------
@@ -429,15 +391,16 @@ const PrepPage = () => {
                             <select
                                 value={selectedResumeId}
                                 onChange={(e) => {
-                                    setSelectedResumeId(e.target.value);
-                                    setSelectedResume(e.target.value);
+                                    const id = Number(e.target.value);
+                                    setSelectedResumeId(id);
+                                    setSelectedResume(id);   // keep JD matcher in sync
                                 }}
                                 className="resume-select-dropdown"
                                 disabled={loadingResumes}
                             >
                                 {resumes.map(r => (
-                                    <option key={r.id} value={r.id}>
-                                        {r.name}
+                                    <option key={r.resume_id} value={r.resume_id}>
+                                        {r.file_name}
                                     </option>
                                 ))}
                             </select>
@@ -525,7 +488,7 @@ const PrepPage = () => {
                                     <FiInfo className="info-icon" /> Resume Diagnostic Match
                                 </div>
                                 <h4 className="cv-info-title">
-                                    Targeting: {activeResumeDetails.analysis.industry.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    Targeting: {(activeResumeDetails.analysis.industry || 'general_tech').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                                 </h4>
                                 <div className="diagnostic-detail-list">
                                     <div className="diagnostic-detail-row">
@@ -833,32 +796,45 @@ const PrepPage = () => {
                                 <h4>Question {activeQuiz.currentIdx + 1} of {activeQuiz.questions.length}</h4>
                             </div>
                             {/* Progress bar */}
-                            <div className="quiz-progress-outer">
-                                <div 
-                                    className="quiz-progress-inner" 
+                            <div className="quiz-progress-outer" style={{ flex: 1, margin: '0 1.5rem' }}>
+                                <div
+                                    className="quiz-progress-inner"
                                     style={{ width: `${((activeQuiz.currentIdx + 1) / activeQuiz.questions.length) * 100}%` }}
                                 />
                             </div>
+                            {/* Exit button */}
+                            <button
+                                className="btn-back"
+                                style={{ flexShrink: 0, background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}
+                                onClick={() => {
+                                    if (window.confirm('Exit quiz? Your progress will not be saved.')) {
+                                        setActiveQuiz(null);
+                                        toast('Quiz exited — score not saved.', { icon: '↩️' });
+                                    }
+                                }}
+                            >
+                                <FiXCircle style={{ marginRight: 4 }} /> Exit Quiz
+                            </button>
                         </div>
 
                         {/* Current Question */}
                         {(() => {
                             const questionObj = activeQuiz.questions[activeQuiz.currentIdx];
                             const selectedAnswer = activeQuiz.answers[questionObj.id];
-                            
+
                             return (
                                 <div className="quiz-question-body">
                                     <p className="quiz-question-text">{questionObj.question}</p>
-                                    
+
                                     <div className="quiz-options-list">
                                         {questionObj.options.map((opt, optIdx) => (
-                                            <label 
-                                                key={optIdx} 
+                                            <label
+                                                key={optIdx}
                                                 className={`quiz-option-label ${selectedAnswer === optIdx ? 'selected' : ''}`}
                                             >
-                                                <input 
-                                                    type="radio" 
-                                                    name={`q-${questionObj.id}`} 
+                                                <input
+                                                    type="radio"
+                                                    name={`q-${questionObj.id}`}
                                                     checked={selectedAnswer === optIdx}
                                                     onChange={() => handleSelectOption(questionObj.id, optIdx)}
                                                     className="quiz-radio-input"
@@ -874,9 +850,9 @@ const PrepPage = () => {
 
                         {/* Navigation controls */}
                         <div className="quiz-controls-footer">
-                            <button 
-                                className="btn-back" 
-                                onClick={prevQuizQuestion} 
+                            <button
+                                className="btn-back"
+                                onClick={prevQuizQuestion}
                                 disabled={activeQuiz.currentIdx === 0}
                             >
                                 <FiChevronLeft /> Previous
@@ -968,14 +944,20 @@ const PrepPage = () => {
                                     <label>Select Target Resume</label>
                                     <select 
                                         value={selectedResume} 
-                                        onChange={(e) => setSelectedResume(e.target.value)}
+                                        onChange={(e) => {
+                                            const id = Number(e.target.value);
+                                            setSelectedResume(id);
+                                            setSelectedResumeId(id); // keep overview diagnostic in sync
+                                        }}
                                         className="settings-input settings-select"
                                         disabled={loadingResumes}
                                     >
-                                        {resumes.map(r => (
-                                            <option key={r.id} value={r.id}>{r.name}</option>
-                                        ))}
-                                        {resumes.length === 0 && <option value="">No resumes uploaded yet</option>}
+                                        {resumes.length === 0
+                                            ? <option value="">No resumes uploaded yet</option>
+                                            : resumes.map(r => (
+                                                <option key={r.resume_id} value={r.resume_id}>{r.file_name}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
                             </div>
@@ -1015,18 +997,32 @@ const PrepPage = () => {
                                     <div className="matches-pane">
                                         <span className="matches-title-label text-success">Matching Keywords:</span>
                                         <div className="tags-container">
-                                            {jdResults.matches.map((m, i) => (
-                                                <span key={i} className="badge-tag match-tag">{m}</span>
-                                            ))}
+                                            {jdResults.matched && jdResults.matched.length > 0
+                                                ? jdResults.matched.map((m, i) => (
+                                                    <span key={i} className="badge-tag match-tag">{m}</span>
+                                                ))
+                                                : <span className="badge-tag" style={{opacity:0.6}}>
+                                                    {jdResults.no_tech_keywords
+                                                        ? 'No specific tech keywords detected in this JD'
+                                                        : 'No overlapping keywords found'}
+                                                  </span>
+                                            }
                                         </div>
                                     </div>
 
                                     <div className="matches-pane" style={{ marginTop: '1.5rem' }}>
                                         <span className="matches-title-label text-danger">Missing Keywords:</span>
                                         <div className="tags-container">
-                                            {jdResults.missing.map((m, i) => (
-                                                <span key={i} className="badge-tag missing-tag">{m}</span>
-                                            ))}
+                                            {jdResults.missing && jdResults.missing.length > 0
+                                                ? jdResults.missing.map((m, i) => (
+                                                    <span key={i} className="badge-tag missing-tag">{m}</span>
+                                                ))
+                                                : <span className="badge-tag" style={{opacity:0.6}}>
+                                                    {jdResults.no_tech_keywords
+                                                        ? 'Add specific tools & technologies to your resume'
+                                                        : 'No missing keywords — good coverage!'}
+                                                  </span>
+                                            }
                                         </div>
                                     </div>
                                 </div>
