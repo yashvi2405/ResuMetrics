@@ -6,13 +6,13 @@ const config = require('./config');
 const { pingDB } = require('./db');
 
 // Routes
-const authRouter      = require('./routes/auth');
-const resumeRouter    = require('./routes/resume');
-const analysisRouter  = require('./routes/analysis');
+const authRouter = require('./routes/auth');
+const resumeRouter = require('./routes/resume');
+const analysisRouter = require('./routes/analysis');
 const dashboardRouter = require('./routes/dashboard');
-const prepRouter      = require('./routes/prep');
-const chatRouter      = require('./routes/chat');
-const scheduleRouter  = require('./routes/schedule');
+const prepRouter = require('./routes/prep');
+const chatRouter = require('./routes/chat');
+const scheduleRouter = require('./routes/schedule');
 
 const app = express();
 
@@ -27,6 +27,8 @@ const defaultOrigins = [
   'http://127.0.0.1:3000',
   'http://127.0.0.1:3001',
   'http://127.0.0.1:5173',
+  // Production
+  'https://resu-metrics.vercel.app',
 ];
 
 const extraOrigins = config.CORS_ALLOWED_ORIGINS
@@ -59,13 +61,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.resolve(config.UPLOAD_DIR)));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',      authRouter);
-app.use('/api/resume',    resumeRouter);
-app.use('/api/analysis',  analysisRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/resume', resumeRouter);
+app.use('/api/analysis', analysisRouter);
 app.use('/api/dashboard', dashboardRouter);
-app.use('/api/prep',      prepRouter);
-app.use('/api/chat',      chatRouter);
-app.use('/api/schedule',  scheduleRouter);
+app.use('/api/prep', prepRouter);
+app.use('/api/chat', chatRouter);
+app.use('/api/schedule', scheduleRouter);
 
 // ─── Root & health endpoints ──────────────────────────────────────────────────
 app.get('/', (_req, res) => {
