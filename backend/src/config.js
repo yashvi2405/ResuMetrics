@@ -7,7 +7,7 @@ const config = {
   // JWT
   SECRET_KEY: process.env.SECRET_KEY || 'your-secret-key-here',
   ALGORITHM: 'HS256',
-  ACCESS_TOKEN_EXPIRE_MINUTES: 30,
+  ACCESS_TOKEN_EXPIRE_MINUTES: 60 * 24 * 7, // 7 days
 
   // MongoDB
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017',

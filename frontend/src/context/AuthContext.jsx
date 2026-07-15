@@ -12,6 +12,17 @@ export const useAuth = () => {
     return context;
 };
 
+/** Decode a JWT and return true if it is expired (or malformed). */
+function isTokenExpired(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // exp is in seconds; Date.now() is in ms
+        return payload.exp * 1000 < Date.now();
+    } catch {
+        return true; // treat malformed token as expired
+    }
+}
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,10 +34,17 @@ export const AuthProvider = ({ children }) => {
             const storedToken = localStorage.getItem('token');
             const storedUser  = localStorage.getItem('user');
             if (storedToken && storedUser) {
-                const userData = JSON.parse(storedUser);
-                setToken(storedToken);
-                setUser(userData);
-                api.setAuthToken(storedToken);
+                if (isTokenExpired(storedToken)) {
+                    // Token is expired — clear it so the user isn't stuck in a 401 loop
+                    console.warn('Stored token is expired, clearing session.');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                } else {
+                    const userData = JSON.parse(storedUser);
+                    setToken(storedToken);
+                    setUser(userData);
+                    api.setAuthToken(storedToken);
+                }
             }
         } catch {
             localStorage.removeItem('token');

@@ -27,13 +27,38 @@ class ApiService {
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor - REMOVED auto logout on 401
+    // Response interceptor - handle 401 with token refresh
     this.api.interceptors.response.use(
       (response) => response,
-      (error) => {
-        // ❌ REMOVED: Do NOT auto-wipe localStorage or redirect here
-        // Let each API call handle 401 errors individually
+      async (error) => {
+        const originalRequest = error.config;
+
         console.error('API Error:', error.response?.status, error.config?.url);
+
+        // If 401 and we haven't already tried refreshing, attempt a refresh
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const refreshResponse = await this.api.post('/auth/refresh');
+            const newToken = refreshResponse.data.access_token;
+
+            if (newToken) {
+              localStorage.setItem('token', newToken);
+              this.api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return this.api(originalRequest);
+            }
+          } catch (refreshError) {
+            // Refresh failed — clear auth state and redirect to login
+            console.warn('Token refresh failed, logging out.');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            delete this.api.defaults.headers.common['Authorization'];
+            window.location.href = '/';
+          }
+        }
+
         return Promise.reject(error);
       }
     );
