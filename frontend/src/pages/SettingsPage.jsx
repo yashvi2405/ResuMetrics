@@ -154,9 +154,9 @@ const SettingsPage = () => {
                 {/* Header Section */}
                 <div className="settings-header-row">
                     <div>
-                        <h1 className="settings-title">System Settings</h1>
+                        <h1 className="settings-title">Settings</h1>
                         <p className="settings-subtitle">
-                            Configure profile details, theme visual interfaces, and custom security protocols.
+                            Update your profile, pick a theme you love, and keep your account secure.
                         </p>
                     </div>
                 </div>
@@ -166,8 +166,8 @@ const SettingsPage = () => {
                     <div className="settings-forms-column">
                         {/* Interactive Theme Selector */}
                         <div className="settings-card">
-                            <h3><FiSliders style={{ marginRight: '8px', verticalAlign: 'middle', color: 'var(--primary)' }} /> Select UI Theme</h3>
-                            <p className="settings-hint" style={{ marginBottom: '1.25rem' }}>Choose an interface scheme matching your development environment.</p>
+                            <h3><FiSliders style={{ marginRight: '8px', verticalAlign: 'middle', color: '#2563eb' }} /> Choose Your Theme</h3>
+                            <p className="settings-hint" style={{ marginBottom: '1.25rem' }}>Pick the look that feels right for you.</p>
                             
                             <div className="theme-cards-grid">
                                 {/* Cyber Stealth Card */}
@@ -179,8 +179,8 @@ const SettingsPage = () => {
                                         <span className="dot dot-bg"></span>
                                         <span className="dot dot-primary"></span>
                                     </div>
-                                    <span className="theme-label">Cyber Stealth</span>
-                                    <span className="theme-sub">Default Dark</span>
+                                    <span className="theme-label">Sky Blue</span>
+                                    <span className="theme-sub">Default • Light</span>
                                 </div>
 
                                 {/* Ivory Minimalist Card */}

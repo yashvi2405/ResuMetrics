@@ -6,7 +6,7 @@ import RecentActivities from '../components/Dashboard/RecentActivities';
 import ScoreTrendChart from '../components/Dashboard/ScoreTrendChart';
 import TopSkillsChart from '../components/Dashboard/TopSkillsChart';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
-import { FiSearch, FiBell, FiFileText, FiBarChart2, FiActivity, FiTarget } from 'react-icons/fi';
+import { FiSearch, FiBell, FiFileText, FiBarChart2, FiActivity, FiAward } from 'react-icons/fi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import './DashboardPage.css';
@@ -41,7 +41,7 @@ const DashboardPage = () => {
                 api.getDashboardStats(),
                 api.getRecentActivities(10)
             ]);
-            
+
             setStats(statsData);
             setActivities(activitiesData);
             setTrends(statsData.score_trends || []);
@@ -67,105 +67,119 @@ const DashboardPage = () => {
         return null;
     }
 
-    // Analytics Summary Cards data
+    // Friendly first name
+    const firstName = user?.name?.split(' ')[0] || 'there';
+
+    // Greeting based on time
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
     const summaryCards = [
         {
-            title: 'Uploaded Resumes',
+            title: 'Your CVs',
             value: stats?.total_resumes || 0,
-            subtext: 'Total files managed',
+            subtext: stats?.total_resumes === 1 ? '1 resume uploaded' : `${stats?.total_resumes || 0} resumes in your library`,
             icon: <FiFileText />,
-            color: '#5f52ff' // primary neon indigo
+            color: '#D97706',
+            bg: 'rgba(217, 119, 6, 0.12)',
         },
         {
-            title: 'Average CV Score',
-            value: stats?.average_score ? `${Math.round(stats.average_score)}%` : '0%',
-            subtext: 'Target score: 85%+',
+            title: 'Average Score',
+            value: stats?.average_score ? `${Math.round(stats.average_score)}%` : '—',
+            subtext: stats?.average_score >= 85 ? 'Above target — great job!' : 'Target: 85% or higher',
             icon: <FiBarChart2 />,
-            color: '#10b981' // success emerald
+            color: '#D97706',
+            bg: 'rgba(217, 119, 6, 0.12)',
         },
         {
-            title: 'Analyses Run',
+            title: 'Analyses Done',
             value: stats?.recent_analyses || 0,
             subtext: 'In the last 30 days',
             icon: <FiActivity />,
-            color: '#f59e0b' // warning amber
+            color: '#D97706',
+            bg: 'rgba(217, 119, 6, 0.12)',
         },
         {
-            title: 'Best Performing',
-            value: stats?.best_resume ? `${Math.round(stats.best_resume.score)}%` : '0%',
-            subtext: stats?.best_resume?.name 
-                ? (stats.best_resume.name.length > 20 ? stats.best_resume.name.slice(0, 18) + '...' : stats.best_resume.name) 
-                : 'No files evaluated',
-            icon: <FiTarget />,
-            color: '#8b5cf6'
+            title: 'Top Resume',
+            value: stats?.best_resume ? `${Math.round(stats.best_resume.score)}%` : '—',
+            subtext: stats?.best_resume?.name
+                ? (stats.best_resume.name.length > 22 ? stats.best_resume.name.slice(0, 20) + '…' : stats.best_resume.name)
+                : 'Upload a resume to get scored',
+            icon: <FiAward />,
+            color: '#D97706',
+            bg: 'rgba(217, 119, 6, 0.12)',
         }
     ];
 
     return (
         <DashboardLayout>
             <div className="dashboard-content animate-slide-up">
-                {/* Search & Header Row */}
+
+                {/* Top bar */}
                 <div className="dashboard-topbar">
                     <div className="search-bar-container">
                         <FiSearch className="search-icon" />
                         <input
                             type="text"
-                            placeholder="Quick search..."
+                            placeholder="Search resumes, skills, activities…"
                             className="search-input"
                             onClick={() => navigate('/resumes')}
+                            readOnly
                         />
                     </div>
                     <div className="topbar-actions">
-                        <button className="icon-notification-btn" onClick={() => toast('No new notifications', { icon: '🔔' })}>
+                        <button
+                            className="icon-notification-btn"
+                            onClick={() => toast('You\'re all caught up!', { icon: '🔔' })}
+                        >
                             <FiBell />
                         </button>
                     </div>
                 </div>
 
-                {/* Dashboard Title & Welcome Section */}
+                {/* Hero welcome */}
                 <div className="dashboard-hero">
-                    <h1 className="hero-title-main">Dashboard Overview</h1>
+                    <div className="hero-greeting">{greeting}, {firstName}</div>
+                    <h1 className="hero-title-main">Here's how your resumes are doing</h1>
                     <p className="hero-desc-main">
-                        Welcome back, {user?.name}. Audit resume diagnostics, monitor scoring indicators, and analyze skills frequency.
+                        Track your scores, spot skill gaps, and see what you've been up to — all in one place.
                     </p>
                 </div>
 
-                {/* Metrics Cards Grid */}
+                {/* Metric cards */}
                 <div className="dashboard-metrics-grid">
                     {summaryCards.map((card, idx) => (
                         <div key={idx} className="metric-summary-card hover-scale">
-                            <div className="metric-card-header">
-                                <div className="metric-card-icon" style={{ backgroundColor: `${card.color}15`, color: card.color }}>
-                                    {card.icon}
-                                </div>
-                                <div className="metric-card-info">
-                                    <span className="metric-title">{card.title}</span>
-                                    <h2 className="metric-value">{card.value}</h2>
-                                    <span className="metric-subtext" title={card.subtext}>{card.subtext}</span>
-                                </div>
+                            <div className="metric-card-icon-wrap" style={{ background: card.bg, color: card.color }}>
+                                {card.icon}
+                            </div>
+                            <div className="metric-card-body">
+                                <span className="metric-title">{card.title}</span>
+                                <h2 className="metric-value" style={{ color: card.color }}>{card.value}</h2>
+                                <span className="metric-subtext">{card.subtext}</span>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Double Column Chart Panel */}
+                {/* Charts */}
                 <div className="dashboard-charts-panel">
                     <div className="dashboard-card chart-card-box hover-scale">
-                        <h3 className="chart-box-title">Score Progression Trend</h3>
+                        <h3 className="chart-box-title">Score Progression</h3>
                         <div className="chart-wrapper-inner">
                             <ScoreTrendChart trends={trends} />
                         </div>
                     </div>
 
                     <div className="dashboard-card chart-card-box hover-scale">
-                        <h3 className="chart-box-title">Identified Skills Distribution</h3>
+                        <h3 className="chart-box-title">Top Skills</h3>
                         <div className="chart-wrapper-inner">
                             <TopSkillsChart skills={topSkills} />
                         </div>
                     </div>
                 </div>
 
-                {/* Bottom Recent Activities list */}
+                {/* Recent activity */}
                 <div className="dashboard-card activities-full-card hover-scale">
                     <RecentActivities activities={activities} />
                 </div>

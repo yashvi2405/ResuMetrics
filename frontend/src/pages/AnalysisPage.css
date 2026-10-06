@@ -25,13 +25,13 @@
     border-radius: 10px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: var(--gray);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-back:hover {
-    background-color: #141a2e;
+    background-color: #2A231A;
     color: var(--dark);
     transform: translateX(-2px);
 }
@@ -48,13 +48,13 @@
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(95, 82, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .download-btn-main:hover {
     background: var(--primary-dark);
-    box-shadow: 0 6px 16px rgba(95, 82, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4);
     transform: translateY(-1.5px);
 }
 
@@ -103,7 +103,7 @@
 /* Formatting Card */
 .formatting-card p {
     font-size: 0.9rem;
-    color: #cbd5e1;
+    color: var(--gray);
     line-height: 1.6;
 }
 

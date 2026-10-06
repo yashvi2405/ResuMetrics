@@ -51,7 +51,7 @@
     padding: 1rem;
     border-bottom: 1px solid var(--border);
     font-size: 0.85rem;
-    color: #cbd5e1;
+    color: var(--gray);
     vertical-align: middle;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .resume-table-row:hover {
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: rgba(217, 119, 6, 0.04);
 }
 
 .filename-cell {

@@ -378,9 +378,9 @@ const PrepPage = () => {
                 {/* Header row */}
                 <div className="prep-header-row">
                     <div>
-                        <h1 className="prep-title">Placement Prep Hub</h1>
+                        <h1 className="prep-title">Let's Get You Interview-Ready</h1>
                         <p className="prep-subtitle">
-                            Practice official study plans directly on LeetCode & HackerRank, review playlists, and audit CS quizzes.
+                            Study plans, quizzes, coding problems — everything you need to walk into that interview with confidence.
                         </p>
                     </div>
 

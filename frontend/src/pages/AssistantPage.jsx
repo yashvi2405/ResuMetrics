@@ -311,11 +311,11 @@ const AssistantPage = () => {
                 {/* Header row */}
                 <div className="assistant-header-row">
                     <div>
-                        <h1 className="assistant-title">AI Prep &amp; Resume Coach</h1>
+                        <h1 className="assistant-title">Your AI Study Buddy</h1>
                         <p className="assistant-subtitle">
                             {groqAvailable
                                 ? <><FiZap style={{ verticalAlign: 'middle', marginRight: 4, color: '#a855f7' }} /> Powered by Groq LLaMA 3.3 · 70B</>
-                                : 'Get instant expert advice or simulate technical interview rounds.'}
+                                : 'Chat with your resume coach or jump into a mock interview round!'}
                         </p>
                     </div>
 

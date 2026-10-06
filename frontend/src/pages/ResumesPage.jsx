@@ -79,9 +79,9 @@ const ResumesPage = () => {
 
                 {/* Page Title */}
                 <div className="resumes-page-header">
-                    <h1 className="resumes-title">Resume Management</h1>
+                    <h1 className="resumes-title">Your Resume Collection</h1>
                     <p className="resumes-subtitle">
-                        Upload new CV profiles, run AI scores, and audit file configurations.
+                        Drop a file and let's see what you've got — we'll score it, parse it, and help you shine.
                     </p>
                 </div>
 

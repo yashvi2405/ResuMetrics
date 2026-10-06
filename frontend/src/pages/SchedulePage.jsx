@@ -132,8 +132,8 @@ const SchedulePage = () => {
             <div className="schedule-content animate-slide-up">
                 {/* Header */}
                 <div className="schedule-header-row">
-                    <h1 className="schedule-title">Interview &amp; Job Schedule</h1>
-                    <p className="schedule-subtitle">Manage submission milestones and mock interview preparation targets.</p>
+                    <h1 className="schedule-title">Plan Your Day, Ace Your Goals</h1>
+                    <p className="schedule-subtitle">Block out your prep sessions, mock interviews, and job deadlines — stay one step ahead.</p>
                 </div>
 
                 <div className="schedule-main-grid">

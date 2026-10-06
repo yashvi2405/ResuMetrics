@@ -28,16 +28,26 @@ const ScoreTrendChart = ({ trends }) => {
         labels: trends.map(t => new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
         datasets: [
             {
-                label: 'Score progression',
+                label: 'Score',
                 data: trends.map(t => t.score),
-                borderColor: '#5f52ff', // var(--primary)
-                backgroundColor: 'rgba(95, 82, 255, 0.12)',
-                tension: 0.35,
+                borderColor: '#D97706',
+                backgroundColor: (ctx) => {
+                    const chart = ctx.chart;
+                    const { ctx: canvasCtx, chartArea } = chart;
+                    if (!chartArea) return 'rgba(217, 119, 6, 0.10)';
+                    const gradient = canvasCtx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, 'rgba(217, 119, 6, 0.20)');
+                    gradient.addColorStop(1, 'rgba(217, 119, 6, 0.0)');
+                    return gradient;
+                },
+                tension: 0.4,
                 fill: true,
-                pointBackgroundColor: '#5f52ff',
+                pointBackgroundColor: '#1C1814',
+                pointBorderColor: '#D97706',
+                pointBorderWidth: 2,
                 pointHoverRadius: 7,
-                pointRadius: 4,
-                borderWidth: 2
+                pointRadius: 5,
+                borderWidth: 2.5
             }
         ]
     };
@@ -46,62 +56,53 @@ const ScoreTrendChart = ({ trends }) => {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                display: false // Hide since it's only one line
-            },
+            legend: { display: false },
             tooltip: {
-                backgroundColor: '#0f1322',
-                titleColor: '#f8fafc',
-                bodyColor: '#cbd5e1',
-                borderColor: '#1e293b',
+                backgroundColor: '#1C1814',
+                titleColor: '#F0E6D3',
+                bodyColor: '#8C7B69',
+                borderColor: '#2A231A',
                 borderWidth: 1,
-                padding: 10,
+                padding: 12,
+                cornerRadius: 10,
                 callbacks: {
-                    label: (context) => {
-                        return `Score: ${context.raw}% - ${trends[context.dataIndex].resume_name}`;
-                    }
+                    label: (context) => `Score: ${context.raw}%`
                 }
             }
         },
         scales: {
             y: {
-                beginAtZero: true,
+                beginAtZero: false,
+                min: 0,
                 max: 100,
-                grid: {
-                    color: '#1e293b' // var(--border)
-                },
+                grid: { color: 'rgba(42, 35, 26, 0.8)' },
                 ticks: {
-                    color: '#94a3b8', // var(--gray)
-                    font: {
-                        family: 'Inter'
-                    }
-                }
+                    color: '#8C7B69',
+                    font: { family: 'Inter', size: 11 },
+                    callback: v => `${v}%`
+                },
+                border: { display: false }
             },
             x: {
-                grid: {
-                    color: 'transparent' // Hide vertical grid lines
-                },
-                ticks: {
-                    color: '#94a3b8',
-                    font: {
-                        family: 'Inter'
-                    }
-                }
+                grid: { color: 'transparent' },
+                ticks: { color: '#8C7B69', font: { family: 'Inter', size: 11 } },
+                border: { display: false }
             }
         }
     };
 
     if (trends.length === 0) {
         return (
-            <div className="no-data">
-                <p>No score data available yet</p>
-                <p className="hint">Upload and analyze resumes to see trends</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '280px', color: '#94a3b8', gap: '0.5rem' }}>
+                <span style={{ fontSize: '2rem' }}>📈</span>
+                <p style={{ fontWeight: 600, color: '#64748b' }}>No score history yet</p>
+                <p style={{ fontSize: '0.8rem' }}>Upload and analyze resumes to see your progress</p>
             </div>
         );
     }
 
     return (
-        <div style={{ height: '320px', width: '100%' }}>
+        <div style={{ height: '280px', width: '100%' }}>
             <Line data={data} options={options} />
         </div>
     );

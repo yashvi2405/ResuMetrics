@@ -74,9 +74,12 @@ const ProtectedRoute = ({ children }) => {
       justifyContent: 'center', 
       alignItems: 'center', 
       height: '100vh',
-      background: '#0f172a',
-      color: '#fff',
-      fontSize: '1.2rem'
+      background: '#111009',
+      color: '#D97706',
+      fontSize: '1rem',
+      fontWeight: 600,
+      fontFamily: 'Inter, sans-serif',
+      letterSpacing: '0.5px'
     }}>
       Loading...
     </div>
@@ -89,8 +92,9 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   React.useEffect(() => {
-    const savedTheme = localStorage.getItem('pref_theme') || 'cyber-stealth';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Remove any leftover theme attribute
+    document.documentElement.removeAttribute('data-theme');
+    document.body.removeAttribute('data-theme');
   }, []);
 
   return (
@@ -102,22 +106,25 @@ function App() {
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#363636',
-                color: '#fff',
+                background: '#1C1814',
+                color: '#F0E6D3',
                 borderRadius: '10px',
+                border: '1px solid #2A231A',
+                fontSize: '0.875rem',
+                fontFamily: 'Inter, sans-serif',
               },
               success: {
                 duration: 3000,
                 iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
+                  primary: '#D97706',
+                  secondary: '#1C1814',
                 },
               },
               error: {
                 duration: 4000,
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: '#B45454',
+                  secondary: '#1C1814',
                 },
               },
             }}

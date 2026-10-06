@@ -109,8 +109,8 @@
 }
 
 /* Color definitions in previews */
-.theme-option-card.cyber-stealth .dot-bg { background-color: #090d16; width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid #1e293b; }
-.theme-option-card.cyber-stealth .dot-primary { background-color: #5f52ff; width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.theme-option-card.cyber-stealth .dot-bg { background-color: #f0f7ff; width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid #e2e8f0; }
+.theme-option-card.cyber-stealth .dot-primary { background-color: #2563eb; width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
 .theme-option-card.ivory-minimalist .dot-bg { background-color: #fafaf9; width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid #e7e5e4; }
 .theme-option-card.ivory-minimalist .dot-primary { background-color: #0d9488; width: 12px; height: 12px; border-radius: 50%; display: inline-block; }

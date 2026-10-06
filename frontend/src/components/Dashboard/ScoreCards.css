@@ -36,7 +36,7 @@
 .score-card:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-3px);
-    border-color: #475569;
+    border-color: #3A2E24;
 }
 
 .score-card-header {
@@ -107,8 +107,8 @@
 
 .score-progress {
     margin: 1rem 0;
-    height: 8px;
-    background: #161f30;
+    height: 6px;
+    background: var(--border);
     border-radius: 10px;
     overflow: hidden;
 }
